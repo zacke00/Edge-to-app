@@ -3,6 +3,8 @@
 #include "Adafruit_SHT31.h"
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <SPI.h>
+#include <ArduinoJson.h>
 
 //------------------------------------------------------------
 //SHT31 humidity and temperature sensor
@@ -18,14 +20,18 @@ const char * home = "Telenor2437tal";
 const char * homepass = "pgvfheslvafvk";
 
 const char * ssid = "Student";
-const char * password = "kristiania1914";
+const char * password = "Kristiania1914";
 //------------------------------------------------------------
 
 //------------------------------------------------------------
 //connection to API
-const char * api_host = "10.0.0.11";
+const char * api_host = "172.26.91.207";
 const int api_port = 3000;
 const char* api_endpoint = "/";
+
+//api data
+DynamicJsonDocument doc(1024);
+String payload;
 //------------------------------------------------------------
 
 //------------------------------------------------------------
@@ -33,11 +39,76 @@ const char* api_endpoint = "/";
 const int LED_PIN = LED_BUILTIN;
 //------------------------------------------------------------
 
-void setup() {
-  Serial.begin(9600);
-
 
 //------------------------------------------------------------
+//connecting to wifi
+void connectToWiFi(const char * ssid, const char * pwd)
+{
+  Serial.println("Connecting to WiFi network: " + String(ssid));
+  WiFi.begin(ssid, pwd); // start connecting to the wifi network
+
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    // Blink LED while we're connecting:
+    digitalWrite( LED_PIN, !digitalRead(LED_PIN) );
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("Connected to WiFi");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+//------------------------------------------------------------
+
+//------------------------------------------------------------
+// send data to API
+void sendPayloadToAPI(String payload) {
+  // Create a WiFiClient object to establish a TCP connection to the API server
+  WiFiClient client;
+
+  // Connect to the API server
+  if (!client.connect(api_host, api_port)) {
+    Serial.println("Error connecting to API server");
+    return;
+  }
+
+  // TCP call to the API server
+  client.print(String("POST ") + api_endpoint + " HTTP/1.1\r\n" +
+               "Host: " + api_host + "\r\n" +
+               "Content-Type: application/json\r\n" +
+               "Content-Length: " + payload.length() + "\r\n" +
+               "Connection: close\r\n\r\n" +
+               payload + "\r\n");
+
+  // Wait for the server to respond
+  while (!client.available()) {
+    delay(10);
+  }
+
+  // Read the response from the server and print it to the serial monitor
+  String response = "";
+  while (client.available()) {
+    response += client.readString();
+  }
+  Serial.println("Payload:");
+  Serial.println(payload);
+  Serial.println("Response:");
+  Serial.println(response);
+
+  // Disconnect from the API server
+  client.stop();
+}
+//------------------------------------------------------------
+
+//------------------------------------------------------------
+//setup
+
+void setup() {
+ Serial.begin(115200);
+
+  connectToWiFi(ssid, password);
 //SHT31
   while (!Serial)
     delay(10);     // will pause Zero, Leonardo, etc until serial console opens
@@ -56,7 +127,10 @@ void setup() {
 //------------------------------------------------------------
 
 }
+//------------------------------------------------------------
 
+//------------------------------------------------------------
+//loop
 
 void loop() {
   float Temperature_t = sht31.readTemperature();
@@ -91,24 +165,3 @@ void loop() {
   }
   loopCnt++;
 }
-
-
-void connectToWiFi(const char * ssid, const char * pwd)
-{
-  Serial.println("Connecting to WiFi network: " + String(ssid));
-  WiFi.begin(ssid, pwd); // start connecting to the wifi network
-
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    // Blink LED while we're connecting:
-    digitalWrite( LED_PIN, !digitalRead(LED_PIN) );
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println();
-  Serial.println("Connected to WiFi");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
