@@ -27,7 +27,7 @@ const char * password = "Kristiania1914";
 //connection to API
 const char * api_host = "172.26.91.207";
 const int api_port = 3000;
-const char* api_endpoint = "/";
+const char* api_endpoint = "/DANGER";
 
 //api data
 DynamicJsonDocument doc(1024);
@@ -129,14 +129,29 @@ void setup() {
 }
 //------------------------------------------------------------
 
-//------------------------------------------------------------
-//loop
 
-void loop() {
+//------------------------------------------------------------
+void Danger() {
+  Serial.println("Danger");
+
+  doc["Temperature"] = sht31.readTemperature();
+  doc["Humidity"] = sht31.readHumidity();
+  serializeJson(doc, payload);
+  sendPayloadToAPI(payload);
+}
+//------------------------------------------------------------
+
+//------------------------------------------------------------
+
+void readings() {
   float Temperature_t = sht31.readTemperature();
   float Humidity_h = sht31.readHumidity();
 
-  if (! isnan(Temperature_t)) {  // check if 'is not a number'
+    if(Temperature_t > 25) {
+    Danger();
+  }
+
+    if (! isnan(Temperature_t)) {  // check if 'is not a number'
     Serial.print("Temp *C = "); Serial.print(Temperature_t); Serial.print("\t\t");
   } else { 
     Serial.println("Failed to read temperature");
@@ -147,6 +162,17 @@ void loop() {
   } else { 
     Serial.println("Failed to read humidity");
   }
+}
+
+//------------------------------------------------------------
+
+
+
+//------------------------------------------------------------
+//loop
+
+void loop() {
+  readings();
 
   delay(1000);
 
