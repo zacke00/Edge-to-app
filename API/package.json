@@ -1,0 +1,23 @@
+{
+    "name": "product-api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "./index.js",
+    "bin": "node",
+    "scripts": {
+        "build": "npx start",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js"
+    },
+    "keywords": [],
+    "author": "Jensa",
+    "license": "MIT",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "debug": "^4.3.4",
+        "express": "^4.18.2",
+        "mongoose": "^6.9.0",
+        "morgan": "^1.10.0",
+        "mqtt": "^4.3.7"
+    }
+}
