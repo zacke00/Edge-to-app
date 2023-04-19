@@ -27,7 +27,8 @@ const char * password = "Kristiania1914";
 //connection to API
 const char * api_host = "172.26.91.207";
 const int api_port = 3000;
-const char* api_endpoint = "/DANGER";
+const char* api_endpoint_danger = "/DANGER";
+const char* api_endpoint_readings = "/Reading";
 
 //api data
 DynamicJsonDocument doc(1024);
@@ -64,7 +65,7 @@ void connectToWiFi(const char * ssid, const char * pwd)
 
 //------------------------------------------------------------
 // send data to API
-void sendPayloadToAPI(String payload) {
+void sendPayloadToAPI(String payload, String endpoint) {
   // Create a WiFiClient object to establish a TCP connection to the API server
   WiFiClient client;
 
@@ -75,7 +76,7 @@ void sendPayloadToAPI(String payload) {
   }
 
   // TCP call to the API server
-  client.print(String("POST ") + api_endpoint + " HTTP/1.1\r\n" +
+  client.print(String("POST ") + endpoint + " HTTP/1.1\r\n" +
                "Host: " + api_host + "\r\n" +
                "Content-Type: application/json\r\n" +
                "Content-Length: " + payload.length() + "\r\n" +
@@ -137,9 +138,10 @@ void Danger() {
   doc["Temperature"] = sht31.readTemperature();
   doc["Humidity"] = sht31.readHumidity();
   serializeJson(doc, payload);
-  sendPayloadToAPI(payload);
+  sendPayloadToAPI(payload, api_endpoint_danger);
 }
 //------------------------------------------------------------
+
 
 //------------------------------------------------------------
 
