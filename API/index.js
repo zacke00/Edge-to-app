@@ -61,6 +61,31 @@ app.get('/DANGER', async(req, res) => {
     }
 });
 
+app.delete('/Reading/:id', async(req, res) => {
+    try {
+        const result = await ReadingModel.deleteOne({ _id: req.params.id });
+        if (result.deletedCount === 0) {
+            res.status(404).send('Reading not found');
+        } else {
+            res.status(200).send('Reading deleted successfully');
+        }
+    } catch (err) {
+        res.status(400).send('Error ' + err);
+    }
+});
+
+app.delete('/DANGER/:id', async(req, res) => {
+    try {
+        const result = await DangerReadingModel.deleteOne({ _id: req.params.id });
+        if (result.deletedCount === 0) {
+            res.status(404).send('Danger reading not found');
+        } else {
+            res.status(200).send('Danger reading deleted successfully');
+        }
+    } catch (err) {
+        res.status(400).send('Error ' + err);
+    }
+});
 
 async function Reading(req, res, type) {
     try {
