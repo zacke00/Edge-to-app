@@ -17,9 +17,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 //connecting to an online database
 mongoose.set('strictQuery', true);
-mongoose.connect('mongodb+srv://homezacke:1WZU97SLO0gE2fqS@clusterz.wrcidaz.mongodb.net/?retryWrites=true&w=majority')
-    .then(() => { console.log("Connected to DB") })
-    .catch((err) => { console.log("Error", err) });
+mongoose.connect('mongodb://127.0.0.1')
+    .then(() => console.log('Connected to MongoDB...'))
+    .catch(err => console.error('Could not connect to MongoDB...'));
 
 
 
@@ -41,6 +41,26 @@ app.get('/', function(req, res) {
 /**
  * Post request to add a new reading to the database 
  */
+
+app.get('/Reading', async(req, res) => {
+    try {
+        const Readings = await ReadingModel.find();
+        res.status(200).json(Readings);
+    } catch (err) {
+        res.status(400).send('Error ' + err);
+    }
+});
+
+app.get('/DANGER', async(req, res) => {
+    try {
+        const readings = await DangerReadingModel.find();
+        res.status(200).json(readings);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 async function Reading(req, res, type) {
     try {

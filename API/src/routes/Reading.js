@@ -9,15 +9,6 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.use(express.json())
 router.use(express.urlencoded({ extended: true }))
 
-router.get('/', async(req, res) => {
-    try {
-        const Readings = await ReadingModel.find();
-        res.status(200).json(Readings);
-    } catch (err) {
-        res.status(400).send('Error ' + err);
-    }
-});
-
 router.get('/:name', async(req, res) => {
     const name = req.params.name;
     try {
