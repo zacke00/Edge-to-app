@@ -210,7 +210,7 @@ void readings() {
   } else {
     DangerousReading = false;
   }
-  Serial.println("DangroudReading = " + bool(DangerousReading));
+
 
   if(DangerousReading == true){
     Danger(Temperature_t, Humidity_h, visible_plus_ir);
@@ -233,7 +233,7 @@ void readings() {
 void loop() {
   readings();
 
-  delay(10000);
+  delay(30000);
 
   // Toggle heater enabled state every 30 seconds
   // An ~3.0 degC temperature increase can be noted when heater is enabled
