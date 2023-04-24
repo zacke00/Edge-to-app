@@ -14,6 +14,7 @@ app.use("/DANGER", ReadingRoutes);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+//connecting to an online database
 mongoose.set('strictQuery', true);
 mongoose.connect('mongodb+srv://homezacke:1WZU97SLO0gE2fqS@clusterz.wrcidaz.mongodb.net/?retryWrites=true&w=majority')
     .then(() => { console.log("Connected to DB") })
