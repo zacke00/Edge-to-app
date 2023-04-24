@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const ReadingModel = require('./src/models/ReadingModel.js');
 const ReadingRoutes = require('./src/routes/Reading.js');
+const DangerReadingModel = require('./src/models/DangerReadingModel.js');
 
 app.use(cors());
 app.use(express.json())
@@ -41,18 +42,21 @@ app.get('/', function(req, res) {
  * Post request to add a new reading to the database 
  */
 
-async function handleRequest(req, res, type) {
+async function Reading(req, res, type) {
     try {
         const name = req.body.name;
         const Humidity = req.body.Humidity;
         const Temperature = req.body.Temperature;
-        const light = req.body.light;
+        const Light = req.body.Light;
+        const Safety = req.body.Safety;
+
 
         const Reading = new ReadingModel({
             name: name,
             Humidity: Humidity,
             Temperature: Temperature,
-            light: light,
+            Light: Light,
+            Safety: Safety,
 
             DateTime: Date.now(),
 
@@ -68,12 +72,44 @@ async function handleRequest(req, res, type) {
     }
 }
 
+async function DANGER(req, res, type) {
+    try {
+        const name = req.body.name;
+        const Humidity = req.body.Humidity;
+        const Temperature = req.body.Temperature;
+        const Light = req.body.Light;
+
+
+
+        const Reading = new DangerReadingModel({
+            name: name,
+            Humidity: Humidity,
+            Temperature: Temperature,
+            Light: Light,
+
+
+            DateTime: Date.now(),
+
+        });
+
+        const result = await Reading.save();
+
+        res.status(200).json(result);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+}
+
+
+
 app.post('/Reading', async(req, res) => {
-    handleRequest(req, res, "Reading");
+    Reading(req, res, "Reading");
 });
 
 app.post('/DANGER', async(req, res) => {
-    handleRequest(req, res, "DANGER");
+    DANGER(req, res, "DANGER");
 });
 
 

@@ -1,16 +1,14 @@
 const mongoose = require('mongoose');
 mongoose.set('strict', true);
-
 /**
  * Schema
  */
-const readingSchema = new mongoose.Schema({
+const dangerReadingSchema = new mongoose.Schema({
     name: String,
     Humidity: Number,
     Temperature: Number,
     Light: Number,
-    Safety: String,
     DateTime: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Reading', readingSchema);
+module.exports = mongoose.model('DANGER', dangerReadingSchema);

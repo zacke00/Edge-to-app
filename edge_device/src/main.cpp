@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <ArduinoJson.h>
 #include "Adafruit_LTR329_LTR303.h"
+#include <time.h>
 
 //------------------------------------------------------------
 //SHT31 humidity, temperature and light sensor
@@ -27,7 +28,7 @@ const char * password = "Kristiania1914";
 
 //------------------------------------------------------------
 //connection to API
-const char * api_host = "172.26.91.207";
+const char * api_host = "172.26.106.75";
 const int api_port = 3000;
 const char* api_endpoint_danger = "/DANGER";
 const char* api_endpoint_readings = "/Reading";
@@ -36,6 +37,11 @@ const char* PublicName = "plantation-one"; //  <- insert name here
 DynamicJsonDocument doc(1024);
 String payload;
 
+//------------------------------------------------------------
+//------------------------------------------------------------
+//variables
+  bool DangerousReading = false;
+  
 //------------------------------------------------------------
 
 //------------------------------------------------------------
@@ -146,54 +152,75 @@ void setup() {
 
 
 //------------------------------------------------------------
-void Danger() {
+//danger reading
+void Danger(int TempReading, int HumReading, int LightReading) {
   Serial.println("Danger");
+
   doc["Name"] = PublicName;
-  doc["Temperature"] = sht31.readTemperature();
-  doc["Humidity"] = sht31.readHumidity();
-  doc["Light"] = 0;
+  doc["Temperature"] = TempReading;
+  doc["Humidity"] = HumReading;
+  doc["Light"] = LightReading;
+  
   serializeJson(doc, payload);
   sendPayloadToAPI(payload, api_endpoint_danger);
+  payload="";
 }
 //------------------------------------------------------------
-void safeReading() {
-  Serial.println("Safe reading");
 
-  doc["Temperature"] = sht31.readTemperature();
-  doc["Humidity"] = sht31.readHumidity();
+
+//------------------------------------------------------------
+//safe reading
+void safeReading(int TempReading, int HumReading, int LightReading, String Status) {
+  Serial.println("Safe reading");
+  
+  doc["Temperature"] = TempReading;
+  doc["Humidity"] = HumReading;
+  doc["Light"] = LightReading;
+  doc["Safety"] = Status;
+  
   serializeJson(doc, payload);
   sendPayloadToAPI(payload, api_endpoint_readings);
+  payload="";
 }
-
 //------------------------------------------------------------
 
+
+//------------------------------------------------------------
+//Init for readings
 void readings() {
-  float Temperature_t = sht31.readTemperature();
-  float Humidity_h = sht31.readHumidity();
-  bool DangerousReading = false;
+  
+  int Temperature_t = sht31.readTemperature();
+  int Humidity_h = sht31.readHumidity();
+  uint16_t visible_plus_ir, infrared;
+  bool valid;
 
-    if(Temperature_t < 15 && Humidity_h < 30) {
-      DangerousReading = true;
-    }
+    valid = ltr.readBothChannels(visible_plus_ir, infrared);
+  if (valid) {
+    Serial.print("Visible + IR: "); Serial.println(visible_plus_ir);
+    Serial.print("Visible: "); Serial.println(visible_plus_ir - infrared);
+  } else {
+    Serial.println("Invalid data");
+  }
 
-    if(DangerousReading) {
-    Danger();
-    }else
-    {
 
-      Serial.print("Safe reading");
-        if (! isnan(Temperature_t)) {  // check if 'is not a number'
-        Serial.print("Temp *C = "); Serial.print(Temperature_t); Serial.print("\t\t");
-      } else { 
-        Serial.println("Failed to read temperature");
-      }
 
-      if (! isnan(Humidity_h)) {  // check if 'is not a number'
-        Serial.print("Hum. % = "); Serial.println(Humidity_h);
-      } else { 
-        Serial.println("Failed to read humidity");
-      }
-    }
+  // Check if the reading is dangerous
+  if (Temperature_t > 33 || (Temperature_t <= 29 && (Humidity_h > 58 || Humidity_h < 48))) {
+    DangerousReading = true;
+  } else {
+    DangerousReading = false;
+  }
+  Serial.println("DangroudReading = " + bool(DangerousReading));
+
+  if(DangerousReading == true){
+    Danger(Temperature_t, Humidity_h, visible_plus_ir);
+  } else if (Temperature_t > 33 || Temperature_t <= 29 || Humidity_h > 58 || Humidity_h < 48)
+  {
+    safeReading(Temperature_t, Humidity_h, visible_plus_ir, "Warning");
+  }else 
+  {
+    safeReading(Temperature_t, Humidity_h, visible_plus_ir, "Safe");
+  }
 }
 
 //------------------------------------------------------------
@@ -205,16 +232,8 @@ void readings() {
 
 void loop() {
   readings();
-  uint16_t visible_plus_ir, infrared;
-  delay(1000);
-bool valid;
 
-    valid = ltr.readBothChannels(visible_plus_ir, infrared);
-  if (valid) {
-    Serial.print("Visible: "); Serial.println(visible_plus_ir - infrared);
-  } else {
-    Serial.println("Invalid data");
-  }
+  delay(10000);
 
   // Toggle heater enabled state every 30 seconds
   // An ~3.0 degC temperature increase can be noted when heater is enabled
