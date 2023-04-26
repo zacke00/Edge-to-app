@@ -4,7 +4,7 @@ mongoose.set('strict', true);
  * Schema
  */
 const dangerReadingSchema = new mongoose.Schema({
-    name: String,
+    Name: String,
     Humidity: Number,
     Temperature: Number,
     Light: Number,

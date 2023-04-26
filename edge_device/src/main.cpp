@@ -6,7 +6,7 @@
 #include <SPI.h>
 #include <ArduinoJson.h>
 #include "Adafruit_LTR329_LTR303.h"
-#include <time.h>
+#include <Adafruit_DotStar.h>
 
 //------------------------------------------------------------
 //SHT31 humidity, temperature and light sensor
@@ -22,13 +22,14 @@ Adafruit_LTR329 ltr = Adafruit_LTR329();
 const char * home = "Telenor2437tal";
 const char * homepass = "pgvfheslvafvk";
 
-const char * ssid = "Student";
-const char * password = "Kristiania1914";
+const char * ssid = "testingwifi";    //  <--- change for the network you need to connect to
+const char * password = "12345abc";   //  <--- change for the network you need to connect to
 //------------------------------------------------------------
 
 //------------------------------------------------------------
 //connection to API
-const char * api_host = "172.26.106.75";
+
+const char * api_host = "192.168.81.194"; //    <------ CHANGE before running on different network
 const int api_port = 3000;
 const char* api_endpoint_danger = "/DANGER";
 const char* api_endpoint_readings = "/Reading";
@@ -38,10 +39,24 @@ DynamicJsonDocument doc(1024);
 String payload;
 
 //------------------------------------------------------------
+
+//------------------------------------------------------------
+// DotStar
+#define NUMPIXELS 1
+#define DATAPIN    33
+#define CLOCKPIN   21
+
+Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_RGB);
+
+//------------------------------------------------------------
+
 //------------------------------------------------------------
 //variables
   bool DangerousReading = false;
-  
+  int SafeTempTop = 33;
+  int SafeTempLow = 29;
+  int SafeHumTop = 58;
+  int SafeHumLow = 48;
 //------------------------------------------------------------
 
 //------------------------------------------------------------
@@ -122,7 +137,9 @@ void setup() {
     while (1) delay(10);
   }
   Serial.println("Found LTR sensor!");
-
+  strip.begin();
+  strip.setBrightness(20);
+  strip.show();
   ltr.setGain(LTR3XX_GAIN_2);
   ltr.setIntegrationTime(LTR3XX_INTEGTIME_100);
   ltr.setMeasurementRate(LTR3XX_MEASRATE_200);
@@ -172,7 +189,7 @@ void Danger(int TempReading, int HumReading, int LightReading) {
 //safe reading
 void safeReading(int TempReading, int HumReading, int LightReading, String Status) {
   Serial.println("Safe reading");
-  
+  doc["Name"] = PublicName;
   doc["Temperature"] = TempReading;
   doc["Humidity"] = HumReading;
   doc["Light"] = LightReading;
@@ -205,8 +222,11 @@ void readings() {
 
 
   // Check if the reading is dangerous
-  if (Temperature_t > 33 || (Temperature_t <= 29 && (Humidity_h > 58 || Humidity_h < 48))) {
+  if (Temperature_t > SafeTempTop || (Temperature_t <= SafeTempLow && (Humidity_h > SafeHumTop || Humidity_h < SafeHumLow))) {
     DangerousReading = true;
+    strip.setPixelColor(0, 0, 0, 255);
+    strip.show();
+
   } else {
     DangerousReading = false;
   }
@@ -214,11 +234,15 @@ void readings() {
 
   if(DangerousReading == true){
     Danger(Temperature_t, Humidity_h, visible_plus_ir);
-  } else if (Temperature_t > 33 || Temperature_t <= 29 || Humidity_h > 58 || Humidity_h < 48)
+  } else if (Temperature_t > SafeTempTop || Temperature_t <= SafeTempLow || Humidity_h > SafeHumTop || Humidity_h < SafeHumLow)
   {
+    strip.setPixelColor(0, 0, 255, 255);
+    strip.show();
     safeReading(Temperature_t, Humidity_h, visible_plus_ir, "Warning");
   }else 
   {
+    strip.setPixelColor(0, 0, 255, 0);
+    strip.show();
     safeReading(Temperature_t, Humidity_h, visible_plus_ir, "Safe");
   }
 }
@@ -235,6 +259,7 @@ void loop() {
 
   delay(30000);
 
+  
   // Toggle heater enabled state every 30 seconds
   // An ~3.0 degC temperature increase can be noted when heater is enabled
   if (loopCnt >= 30) {

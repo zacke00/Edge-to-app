@@ -89,7 +89,7 @@ app.delete('/DANGER/:id', async(req, res) => {
 
 async function Reading(req, res, type) {
     try {
-        const name = req.body.name;
+        const Name = req.body.Name;
         const Humidity = req.body.Humidity;
         const Temperature = req.body.Temperature;
         const Light = req.body.Light;
@@ -97,7 +97,7 @@ async function Reading(req, res, type) {
 
 
         const Reading = new ReadingModel({
-            name: name,
+            Name: Name,
             Humidity: Humidity,
             Temperature: Temperature,
             Light: Light,
@@ -119,7 +119,7 @@ async function Reading(req, res, type) {
 
 async function DANGER(req, res, type) {
     try {
-        const name = req.body.name;
+        const Name = req.body.Name;
         const Humidity = req.body.Humidity;
         const Temperature = req.body.Temperature;
         const Light = req.body.Light;
@@ -127,7 +127,7 @@ async function DANGER(req, res, type) {
 
 
         const Reading = new DangerReadingModel({
-            name: name,
+            Name: Name,
             Humidity: Humidity,
             Temperature: Temperature,
             Light: Light,

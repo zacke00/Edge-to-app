@@ -5,7 +5,7 @@ mongoose.set('strict', true);
  * Schema
  */
 const readingSchema = new mongoose.Schema({
-    name: String,
+    Name: String,
     Humidity: Number,
     Temperature: Number,
     Light: Number,
