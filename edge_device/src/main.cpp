@@ -22,14 +22,14 @@ Adafruit_LTR329 ltr = Adafruit_LTR329();
 const char * home = "Telenor2437tal";
 const char * homepass = "pgvfheslvafvk";
 
-const char * ssid = "testingwifi";    //  <--- change for the network you need to connect to
-const char * password = "12345abc";   //  <--- change for the network you need to connect to
+const char * ssid = "Student";    //  <--- change for the network you need to connect to
+const char * password = "Kristiania1914";   //  <--- change for the network you need to connect to
 //------------------------------------------------------------
 
 //------------------------------------------------------------
 //connection to API
 
-const char * api_host = "192.168.81.194"; //    <------ CHANGE before running on different network
+const char * api_host = "172.26.125.73"; //    <------ CHANGE before running on different network
 const int api_port = 3000;
 const char* api_endpoint_danger = "/DANGER";
 const char* api_endpoint_readings = "/Reading";
