@@ -181,6 +181,7 @@ void Danger(int TempReading, int HumReading, int LightReading) {
   serializeJson(doc, payload);
   sendPayloadToAPI(payload, api_endpoint_danger);
   payload="";
+  
 }
 //------------------------------------------------------------
 
