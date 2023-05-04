@@ -66,7 +66,7 @@ Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_RGB);
 //variables
   bool DangerousReading = false;
   int SafeTempTop = 33;
-  int SafeTempLow = 29;
+  int SafeTempLow = 28;
   int SafeHumTop = 58;
   int SafeHumLow = 48;
 
