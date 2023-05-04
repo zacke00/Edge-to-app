@@ -7,6 +7,7 @@
 #include <ArduinoJson.h>
 #include "Adafruit_LTR329_LTR303.h"
 #include <Adafruit_DotStar.h>
+#include <PubSubClient.h>
 
 //------------------------------------------------------------
 //SHT31 humidity, temperature and light sensor
@@ -22,14 +23,14 @@ Adafruit_LTR329 ltr = Adafruit_LTR329();
 const char * home = "Telenor2437tal";
 const char * homepass = "pgvfheslvafvk";
 
-const char * ssid = "Student";    //  <--- Change to connect to Wi-Fi
-const char * password = "Kristiania1914";   //  <--- Change to connect to Wi-Fi
+const char * ssid = "testingwifi";    //  <--- Change to connect to Wi-Fi
+const char * password = "12345abc";   //  <--- Change to connect to Wi-Fi
 //------------------------------------------------------------
 
 //------------------------------------------------------------
 //connection to API
 
-const char * api_host = "172.26.74.146"; //    <------ Change to send to API
+const char * api_host = "192.168.81.194"; //    <------ Change to send to API
 const int api_port = 3000;
 const char* api_endpoint_danger = "/DANGER";
 const char* api_endpoint_readings = "/Reading";
@@ -37,6 +38,17 @@ const char* PublicName = "plantation-one"; //  <- insert name here
 //api data
 DynamicJsonDocument doc(1024);
 String payload;
+
+//------------------------------------------------------------
+
+//------------------------------------------------------------
+//MQTT
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const char *mqtt_server = "192.168.81.194";
+const int mqtt_port = 1883;
+
 
 //------------------------------------------------------------
 
@@ -57,6 +69,11 @@ Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_RGB);
   int SafeTempLow = 29;
   int SafeHumTop = 58;
   int SafeHumLow = 48;
+
+unsigned long lastApiCall = 0;
+unsigned long lastReading = 0;
+const unsigned long apiInterval = 60000; // 1 minute
+  const unsigned long readingInterval = 1000; // 1 second
 //------------------------------------------------------------
 
 //------------------------------------------------------------
@@ -126,6 +143,24 @@ void sendPayloadToAPI(String payload, String endpoint) {
   client.stop();
 }
 //------------------------------------------------------------
+//------------------------------------------------------------
+//MQTT
+
+void connectToMQTT() {
+  client.setServer(mqtt_server, mqtt_port);
+
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    if (client.connect("ESP32Client")) {
+      Serial.println("connected");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
 
 //------------------------------------------------------------
 //setup
@@ -147,6 +182,7 @@ void setup() {
   
  //Wifi connection
   connectToWiFi(ssid, password);
+  connectToMQTT();
 //SHT31
   while (!Serial)
     delay(10);     // will pause Zero, Leonardo, etc until serial console opens
@@ -206,7 +242,29 @@ void safeReading(int TempReading, int HumReading, int LightReading, String Statu
 //------------------------------------------------------------
 //Init for readings
 void readings() {
+  int Temperature_t = sht31.readTemperature();
+  int Humidity_h = sht31.readHumidity();
+  uint16_t visible_plus_ir, infrared;
+  bool valid;
   
+      valid = ltr.readBothChannels(visible_plus_ir, infrared);
+  if (!valid) {
+    Serial.println("Invalid data");
+  }
+
+  if (client.connected()) {
+    String topic = "my/test/topic";
+    String message = "{\"temperature\":" + String(Temperature_t) + ",\"humidity\":" + String(Humidity_h) + ",\"light\":" + String(visible_plus_ir) + "}";
+    client.publish(topic.c_str(), message.c_str());
+  } else {
+    connectToMQTT();
+  }
+}
+//------------------------------------------------------------
+
+//------------------------------------------------------------
+//send data to api
+void sendDataToApi(){
   int Temperature_t = sht31.readTemperature();
   int Humidity_h = sht31.readHumidity();
   uint16_t visible_plus_ir, infrared;
@@ -246,33 +304,28 @@ void readings() {
     strip.show();
     safeReading(Temperature_t, Humidity_h, visible_plus_ir, "Safe");
   }
+
 }
 
 //------------------------------------------------------------
-
-
-
 //------------------------------------------------------------
 //loop
 
 void loop() {
-  readings();
+  delay(100);
+  unsigned long currentMillis = millis();
+client.loop();
 
-  delay(30000);
 
-  
-  // Toggle heater enabled state every 30 seconds
-  // An ~3.0 degC temperature increase can be noted when heater is enabled
-  if (loopCnt >= 30) {
-    enableHeater = !enableHeater;
-    sht31.heater(enableHeater);
-    Serial.print("Heater Enabled State: ");
-    if (sht31.isHeaterEnabled())
-      Serial.println("ENABLED");
-    else
-      Serial.println("DISABLED");
-
-    loopCnt = 0;
+    if (currentMillis - lastReading >= readingInterval) {
+    readings(); // Send readings to MQTT server
+    lastReading = currentMillis;
   }
-  loopCnt++;
+
+
+    if (currentMillis - lastApiCall >= apiInterval) {
+      sendDataToApi();
+    lastApiCall = currentMillis;
+  }
+
 }
