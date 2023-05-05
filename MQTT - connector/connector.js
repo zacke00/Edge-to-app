@@ -14,18 +14,12 @@ mqttClient.on('connect', () => {
 wsServer.on('connection', (socket) => {
     console.log('WebSocket client connected');
 
-    socket.on('message', (message) => {
-        const { action, topic } = JSON.parse(message);
+    const topic = 'controller/plantation-one/topic';
+    mqttClient.subscribe(topic);
 
-        if (action === 'subscribe') {
-            mqttClient.subscribe(topic);
-            mqttClient.on('message', (mqttTopic, mqttMessage) => {
-                if (mqttTopic === topic && socket.readyState === WebSocket.OPEN) {
-                    socket.send(mqttMessage.toString());
-                }
-            });
-        } else if (action === 'unsubscribe') {
-            mqttClient.unsubscribe(topic);
+    mqttClient.on('message', (mqttTopic, mqttMessage) => {
+        if (mqttTopic === topic) {
+            socket.send(mqttMessage.toString());
         }
     });
 
