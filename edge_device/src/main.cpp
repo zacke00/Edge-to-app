@@ -35,6 +35,7 @@ const int api_port = 3000;
 const char* api_endpoint_danger = "/DANGER";
 const char* api_endpoint_readings = "/Reading";
 const char* PublicName = "plantation-one"; //  <- insert name here
+const char* controller_topic = "my/test/topic"; // <--- change this topic for new MQTT connection with a new controller
 //api data
 DynamicJsonDocument doc(1024);
 String payload;
@@ -253,7 +254,7 @@ void readings() {
   }
 
   if (client.connected()) {
-    String topic = "my/test/topic";
+    String topic = controller_topic;
     String message = "{\"temperature\":" + String(Temperature_t) + ",\"humidity\":" + String(Humidity_h) + ",\"light\":" + String(visible_plus_ir) + "}";
     client.publish(topic.c_str(), message.c_str());
   } else {

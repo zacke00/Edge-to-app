@@ -9,19 +9,29 @@ const wsServer = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 mqttClient.on('connect', () => {
     console.log('Connected to MQTT broker');
-    mqttClient.subscribe('my/test/topic');
-});
-
-mqttClient.on('message', (topic, message) => {
-    wsServer.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(message.toString());
-        }
-    });
 });
 
 wsServer.on('connection', (socket) => {
     console.log('WebSocket client connected');
+
+    socket.on('message', (message) => {
+        const { action, topic } = JSON.parse(message);
+
+        if (action === 'subscribe') {
+            mqttClient.subscribe(topic);
+            mqttClient.on('message', (mqttTopic, mqttMessage) => {
+                if (mqttTopic === topic && socket.readyState === WebSocket.OPEN) {
+                    socket.send(mqttMessage.toString());
+                }
+            });
+        } else if (action === 'unsubscribe') {
+            mqttClient.unsubscribe(topic);
+        }
+    });
+
+    socket.on('close', () => {
+        console.log('WebSocket client disconnected');
+    });
 });
 
 console.log(`WebSocket server running on port ${WEBSOCKET_PORT}`);
