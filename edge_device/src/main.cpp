@@ -47,7 +47,7 @@ String payload;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-const char *mqtt_server = "192.168.81.194";
+const char *mqtt_server = "192.168.81.194"; //   <------ Change to send to MQTT (same as api_host. i could change the connection but it would look messy)
 const int mqtt_port = 1883;
 
 
